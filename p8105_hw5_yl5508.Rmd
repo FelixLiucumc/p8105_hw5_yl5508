@@ -70,7 +70,7 @@ head(tot_propt_tidy, 5)
 
 
 ```{r tot_proptest_alternative, eval = FALSE}
-#or use code below
+#or use the code below
 output = vector("list", length = nrow(tot_hom))
 
 for (i in 1:nrow(tot_hom)) {
@@ -92,7 +92,7 @@ tot_propt_tidy |>
   geom_point(aes(x = estimate)) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high)) +
   labs(
-    x = "Estimated proportion and 95% Confidence Interval",
+    x = "Estimated proportion and Confidence Interval",
     y = "City_State",
     title = "Estimates and CIs of Unsorved Homocides in Listed City") +
   theme_minimal() +
@@ -134,6 +134,41 @@ lon_data =
 
 head(lon_data, 5)
 ```
+
+
+```{r datacleaning_p2_alternative, eval = FALSE}
+#or use the code below
+res =
+  tibble(
+    file = list.files("./data/"),
+    path = str_c("./data/", file)
+  ) |>
+  slice_head(n = -1)
+lon_data = bind_rows(purrr::map(res$path, read_csv))
+```
+
+
+```{r spaghetti}
+obs_spa =
+  lon_data |>
+  ggplot(aes(group = id, x = week, y = observation, color = id)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    x = "Week",
+    y = "Observation",
+    title = "Spaghetti Plot of Observation over Time, distiguished in Arms") +
+  facet_grid(~ arm)+
+  theme_minimal() +
+  theme(plot.title = element_text(size = 15, face = "bold", hjust = 0.5))
+obs_spa
+```
+
+## Problem 3
+
+
+
+
 
 
 

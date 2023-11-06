@@ -1,0 +1,126 @@
+---
+title: "p8105_hw5_yl5508"
+author: "Yifei LIU"
+date: 2023/11/05
+output: github_document
+---
+
+It's a proj for HW5 about ITERATION.\
+
+```{r setup, message = FALSE}
+library(tidyverse)
+options(scipen = 999)
+options(digits = 2)
+```
+
+## Problem 1
+
+```{r datacleaning_p1, message = FALSE}
+vic_clean =
+  read_csv("./data/homicide-data.csv") |>
+  janitor::clean_names() |>
+  mutate(city_state = str_c(city, ", ", state))
+```
+
+```{r #ofhomocides}
+tot_hom =
+  vic_clean |>
+  group_by(city_state) |>
+  summarise(
+    total_homocide = n(),
+    unsolved_homocide = sum(disposition  %in% c("Closed without arrest
+", "Open/No arrest")))
+```
+
+```{r Bal_proptest}
+Bal_hom =
+  vic_clean |>
+  filter(city_state == "Baltimore, MD") |>
+  group_by(city_state) |>
+  summarise(
+    total_homocide = n(),
+    unsolved_homocide = sum(disposition  %in% c("Closed without arrest
+", "Open/No arrest")))
+
+Bal_propt = prop.test(Bal_hom |> pull(unsolved_homocide), Bal_hom |> pull(total_homocide), alternative = c("two.sided"), conf.level = 0.95)
+
+Bal_propt_tidy = broom::tidy(Bal_propt)
+
+save(Bal_propt_tidy, file = "./results/Bal_propt_tidy.RData")
+
+Bal_propt_est = Bal_propt_tidy |> pull(estimate)
+
+Bal_proptest_int = str_c(Bal_propt_tidy |> pull(conf.low), ",", Bal_propt_tidy |> pull(conf.high))
+```
+
+`r Bal_propt_tidy |> pull(estimate)`
+`r str_c("(", Bal_propt_tidy |> pull(conf.low), ",", Bal_propt_tidy |> pull(conf.high), ")")`
+
+```{r tot_proptest}
+output = purrr::map2(tot_hom$unsolved_homocide, tot_hom$total_homocide, ~ prop.test(x = .x, n = .y, alternative = c("two.sided"), conf.level = 0.95))
+
+tot_propt_tidy =
+  map_dfr(output, broom::tidy)|>
+  select(estimate, conf.low, conf.high) |>
+  mutate(city_state = tot_hom$city_state) |>
+  mutate(CI = str_c("(", conf.low, ", ", conf.high, ")")) |>
+  select(city_state, everything())
+
+head(tot_propt_tidy, 5)
+```
+
+
+```{r tot_proptest_alternative, eval = FALSE}
+#or use code below
+output = vector("list", length = nrow(tot_hom))
+
+for (i in 1:nrow(tot_hom)) {
+  output[[i]] = broom::tidy(prop.test(tot_hom$unsolved_homocide[[i]], tot_hom$total_homocide[[i]], alternative = c("two.sided"), conf.level = 0.95)) |>
+    unnest(cols = everything())
+}
+
+tot_propt_tidy =
+  bind_rows(output) |>
+  select(estimate, conf.low, conf.high) |>
+  mutate(city_state = tot_hom$city_state) |>
+  mutate(CI = str_c("(", conf.low, ", ", conf.high, ")")) |>
+  select(city_state, everything())
+```
+
+```{r hom_geom}
+tot_propt_tidy |>
+  ggplot(aes(y = reorder(city_state, estimate))) + 
+  geom_point(aes(x = estimate)) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high)) +
+  labs(
+    x = "Estimated proportion and 95% Confidence Interval",
+    y = "City_State",
+    title = "Estimates and CIs of Unsorved Homocides in Listed City") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 15, face = "bold", hjust = 0.5))
+```
+
+## Problem 2
+
+```{r datacleaning_p2, message = FALSE}
+lon_con = list()
+
+for (i in 1:10) {
+  i = if_else(i<10, str_c("0", as.character(i)), as.character(i))
+  path = str_c("./data/", "con_", i, ".csv")
+  lon_con[[i]] = read_csv(path)
+}
+
+lon_exp = list()
+
+for (i in 1:10) {
+  i = if_else(i<10, str_c("0", as.character(i)), as.character(i))
+  path = str_c("./data/", "exp_", i, ".csv")
+  lon_exp[[i]] = read_csv(path)
+}
+```
+
+
+
+
+

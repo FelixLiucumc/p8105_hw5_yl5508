@@ -9,7 +9,6 @@ It's a proj for HW5 about ITERATION.\
 
 ```{r setup, message = FALSE}
 library(tidyverse)
-options(scipen = 999)
 options(digits = 2)
 ```
 
@@ -54,9 +53,9 @@ Bal_proptest_int = str_c(Bal_propt_tidy |> pull(conf.low), ",", Bal_propt_tidy |
 ```
 
 `r Bal_propt_tidy |> pull(estimate)`
-`r str_c("(", Bal_propt_tidy |> pull(conf.low), ",", Bal_propt_tidy |> pull(conf.high), ")")`
+`r str_c("(", round(Bal_propt_tidy |> pull(conf.low), 2), ",", round(Bal_propt_tidy |> pull(conf.high), 2), ")")`
 
-```{r tot_proptest}
+```{r tot_proptest, warning = FALSE}
 output = purrr::map2(tot_hom$unsolved_homocide, tot_hom$total_homocide, ~ prop.test(x = .x, n = .y, alternative = c("two.sided"), conf.level = 0.95))
 
 tot_propt_tidy =
@@ -97,27 +96,43 @@ tot_propt_tidy |>
     y = "City_State",
     title = "Estimates and CIs of Unsorved Homocides in Listed City") +
   theme_minimal() +
-  theme(plot.title = element_text(size = 15, face = "bold", hjust = 0.5))
+  theme(plot.title = element_text(size = 15, face = "bold", hjust = 0.5), axis.text.y = element_text(size = 5))
 ```
 
 ## Problem 2
 
 ```{r datacleaning_p2, message = FALSE}
 lon_con = list()
-
 for (i in 1:10) {
-  i = if_else(i<10, str_c("0", as.character(i)), as.character(i))
-  path = str_c("./data/", "con_", i, ".csv")
-  lon_con[[i]] = read_csv(path)
+  path = str_c("./data/", "con_", if_else(i<10, str_c("0", as.character(i)), as.character(i)), ".csv")
+  res = read_csv(path)
+  res = res |> mutate(id = as.character(i))
+  lon_con[[i]] = res
 }
+lon_con_data =
+  bind_rows(lon_con) |>
+  pivot_longer(week_1:week_8, names_to = "week", values_to = "observation") |>
+  mutate(week = str_extract(week, "(?<=^.{5}).")) |>
+  mutate(arm = "con")
 
 lon_exp = list()
-
 for (i in 1:10) {
-  i = if_else(i<10, str_c("0", as.character(i)), as.character(i))
-  path = str_c("./data/", "exp_", i, ".csv")
-  lon_exp[[i]] = read_csv(path)
+  path = str_c("./data/", "exp_", if_else(i<10, str_c("0", as.character(i)), as.character(i)), ".csv")
+  res = read_csv(path)
+  res = res |> mutate(id = as.character(i))
+  lon_exp[[i]] = res
 }
+lon_exp_data = bind_rows(lon_exp) |>
+  pivot_longer(week_1:week_8, names_to = "week", values_to = "observation") |>
+  mutate(week = str_extract(week, "(?<=^.{5}).")) |>
+  mutate(arm = "exp")
+
+lon_data =
+  bind_rows(lon_con_data, lon_exp_data) |>
+  arrange(id) |>
+  janitor::clean_names()
+
+head(lon_data, 5)
 ```
 
 

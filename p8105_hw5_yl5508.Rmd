@@ -106,8 +106,8 @@ lon_con = list()
 for (i in 1:10) {
   path = str_c("./data/", "con_", if_else(i<10, str_c("0", as.character(i)), as.character(i)), ".csv")
   res = read_csv(path)
-  res = res |> mutate(id = as.character(i))
-  lon_con[[i]] = res
+  result = res |> mutate(id = as.character(i))
+  lon_con[[i]] = result
 }
 lon_con_data =
   bind_rows(lon_con) |>
@@ -119,8 +119,8 @@ lon_exp = list()
 for (i in 1:10) {
   path = str_c("./data/", "exp_", if_else(i<10, str_c("0", as.character(i)), as.character(i)), ".csv")
   res = read_csv(path)
-  res = res |> mutate(id = as.character(i))
-  lon_exp[[i]] = res
+  result = res |> mutate(id = as.character(i))
+  lon_exp[[i]] = result
 }
 lon_exp_data = bind_rows(lon_exp) |>
   pivot_longer(week_1:week_8, names_to = "week", values_to = "observation") |>
@@ -166,11 +166,106 @@ obs_spa
 
 ## Problem 3
 
+```{r mu_0}
+sample = function(ntest, mu) {
+  res = list()
+  for (i in 1:ntest) {
+    res[[i]] = rnorm(30, mu, 1)
+  }
+  res
+}
+
+t_test = function(sample, mu){
+  res = t.test(x= sample, mu = mu, alternative = "two.sided", conf.level = 0.95) |>
+      broom::tidy() |>
+      select(estimate, p.value)
+  res
+}
+
+x_sample = sample(50, 0)
+#code: "x_sample = map2(50, 0, \(x, y) sample(ntest = x, mu = y))" cannot work. Because it creates "list of 1" rather than "list of 50".
+
+mu_0 = map2(x_sample, 0, \(x, y) t_test(sample = x, mu = y))
+#code: "mu_0 = t_test(x_sample, 0)" cannot work. (?)
+mu_0_outcome =
+  tibble(mu_0) |>
+  unnest(mu_0) |>
+  rename(p_value = p.value) |>
+  mutate(mu = 0) |>
+  mutate(iter = 1:50) |>
+  select(mu, iter, everything())
+
+mu_0_outcome
+```
 
 
+```{r mu_1to6}
+mu_1to6 = tibble()
+for (i in 1:6) {
+  res = map2(x_sample, i, \(x, y) t_test(sample = x, mu = y))
+  result =
+    tibble(res) |>
+    unnest(res) |>
+    rename(p_value = p.value) |>
+    mutate(mu = i) |>
+    mutate(iter = 1:50) |>
+    select(mu, iter, everything())
+  mu_1to6 = bind_rows(mu_1to6, result)
+}
+
+mu_0to6 = bind_rows(mu_0_outcome, mu_1to6)
+
+mu_0to6
+```
 
 
+```{r power_plot}
+power_plot =
+  mu_0to6 |>
+  group_by(mu) |>
+  summarize(p_reject = mean(p_value < 0.05)) |>
+  ggplot(aes(x = mu, y = p_reject)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0,6)) +
+  labs(x = "True Value of μ",y = "Power",title = "Power versus True Value of μ") +
+  theme_minimal()
 
+power_plot
+```
+
+```{r estimate_plot}
+est_plot =
+  mu_0to6 |>
+  group_by(mu) |>
+  summarize(ave_est = mean(estimate)) |>
+  ggplot(aes(x = mu, y = ave_est)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0,6)) +
+  scale_y_continuous(breaks = seq(0,6)) +
+  labs(x = "True Value of μ",y = "Average Estimate",title = "Average Estimate versus True Value of μ") +
+  theme_minimal()
+
+est_plot
+```
+
+```{r estimate_reject_plot}
+est_rej_plot =
+  mu_0to6 |>
+  filter(p_value < 0.05) |>
+  group_by(mu) |>
+  summarize(ave_est = mean(estimate)) |>
+  ggplot(aes(x = mu, y = ave_est)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0,6)) +
+  scale_y_continuous(breaks = seq(0,6)) +
+  labs(x = "True Value of μ",y = "Average Estimate",title = "Average Estimate versus True Value of μ") +
+  theme_minimal()
+
+est_rej_plot
+```
 
 
 

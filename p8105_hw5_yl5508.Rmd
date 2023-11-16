@@ -177,7 +177,7 @@ sample = function(ntest, mu) {
 }
 
 t_test = function(sample, mu){
-  res = t.test(x= sample, mu = mu, alternative = "two.sided", conf.level = 0.95) |>
+  res = t.test(x = sample, mu = mu, alternative = "two.sided", conf.level = 0.95) |>
       broom::tidy() |>
       select(estimate, p.value)
   res
@@ -203,7 +203,7 @@ mu_0_outcome
 ```{r mu_0to6}
 mu_1to6 = tibble()
 for (i in 1:6) {
-  res = map2(x_sample, i, \(x, y) t_test(sample = x, mu = y))
+  res = map2(sample(5000, i), i, \(x, y) t_test(sample = x, mu = y))
   result =
     tibble(res) |>
     unnest(res) |>
@@ -273,4 +273,3 @@ est_rej_plot
 ```
 
 Through a comprehensive analysis of multiple graphs, we've observed that when the power is low, there's a significant disparity between the estimate under rejecting the null hypothesis and the true mean. Moreover, as the power decreases, this gap becomes more apparent. However, as the power approaches 1 (true mean exceeding 4), the values of both the estimate and the true mean essentially converge.\
-

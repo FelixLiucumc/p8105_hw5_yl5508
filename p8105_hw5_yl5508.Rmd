@@ -10,6 +10,7 @@ It's a proj for HW5 about ITERATION.\
 ```{r setup, message = FALSE}
 library(tidyverse)
 options(digits = 2)
+set.seed(1)
 ```
 
 ## Problem 1

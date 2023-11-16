@@ -27,8 +27,7 @@ tot_hom =
   group_by(city_state) |>
   summarise(
     total_homocide = n(),
-    unsolved_homocide = sum(disposition  %in% c("Closed without arrest
-", "Open/No arrest")))
+    unsolved_homocide = sum(disposition  %in% c("Closed without arrest", "Open/No arrest")))
 ```
 
 ```{r Bal_proptest}
@@ -164,6 +163,8 @@ obs_spa =
 obs_spa
 ```
 
+From the plot, we notice following differences. In the control group, the observations exhibit a relatively stable trend, fluctuating within a certain range. However, in the experiment group, there is a notably significant upward trend, roughly increasing from 1 to 5.\
+
 ## Problem 3
 
 ```{r mu_0}
@@ -182,8 +183,8 @@ t_test = function(sample, mu){
   res
 }
 
-x_sample = sample(50, 0)
-#code: "x_sample = map2(50, 0, \(x, y) sample(ntest = x, mu = y))" cannot work. Because it creates "list of 1" rather than "list of 50".
+x_sample = sample(5000, 0)
+#code: "x_sample = map2(5000, 0, \(x, y) sample(ntest = x, mu = y))" cannot work. Because it creates "list of 1" rather than "list of 5000".
 
 mu_0 = map2(x_sample, 0, \(x, y) t_test(sample = x, mu = y))
 #code: "mu_0 = t_test(x_sample, 0)" cannot work. (?)
@@ -192,14 +193,14 @@ mu_0_outcome =
   unnest(mu_0) |>
   rename(p_value = p.value) |>
   mutate(mu = 0) |>
-  mutate(iter = 1:50) |>
+  mutate(iter = 1:5000) |>
   select(mu, iter, everything())
 
 mu_0_outcome
 ```
 
 
-```{r mu_1to6}
+```{r mu_0to6}
 mu_1to6 = tibble()
 for (i in 1:6) {
   res = map2(x_sample, i, \(x, y) t_test(sample = x, mu = y))
@@ -208,7 +209,7 @@ for (i in 1:6) {
     unnest(res) |>
     rename(p_value = p.value) |>
     mutate(mu = i) |>
-    mutate(iter = 1:50) |>
+    mutate(iter = 1:5000) |>
     select(mu, iter, everything())
   mu_1to6 = bind_rows(mu_1to6, result)
 }
@@ -234,6 +235,8 @@ power_plot =
 power_plot
 ```
 
+From the graph, it's evident that as the true mean (μ) increases, the power of the experiment also increases, following a sigmoid growth pattern. Additionally, once the true mean surpasses 4, the power essentially reaches 1.\
+
 ```{r estimate_plot}
 est_plot =
   mu_0to6 |>
@@ -249,6 +252,8 @@ est_plot =
 
 est_plot
 ```
+
+In a repeated experiment with 5000 trials, we can consider the estimate to be nearly equal to the true mean. The curve in the graph closely aligning with y=x further confirms this point.\
 
 ```{r estimate_reject_plot}
 est_rej_plot =
@@ -267,5 +272,5 @@ est_rej_plot =
 est_rej_plot
 ```
 
-
+Through a comprehensive analysis of multiple graphs, we've observed that when the power is low, there's a significant disparity between the estimate under rejecting the null hypothesis and the true mean. Moreover, as the power decreases, this gap becomes more apparent. However, as the power approaches 1 (true mean exceeding 4), the values of both the estimate and the true mean essentially converge.\
 

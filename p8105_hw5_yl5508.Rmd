@@ -171,7 +171,7 @@ From the plot, we notice following differences. In the control group, the observ
 sample = function(ntest, mu) {
   res = list()
   for (i in 1:ntest) {
-    res[[i]] = rnorm(30, mu, 1)
+    res[[i]] = rnorm(30, mu, 5)
   }
   res
 }
@@ -235,7 +235,7 @@ power_plot =
 power_plot
 ```
 
-From the graph, it's evident that as the true mean (μ) increases, the power of the experiment also increases, following a sigmoid growth pattern. Additionally, once the true mean surpasses 4, the power essentially reaches 1.\
+The power exhibits an irregular zigzag pattern with no consistent correlation across various tests (where the null hypotheses range from the true mean being equal to 0 to 6).\
 
 ```{r estimate_plot}
 est_plot =
@@ -272,4 +272,4 @@ est_rej_plot =
 est_rej_plot
 ```
 
-Through a comprehensive analysis of multiple graphs, we've observed that when the power is low, there's a significant disparity between the estimate under rejecting the null hypothesis and the true mean. Moreover, as the power decreases, this gap becomes more apparent. However, as the power approaches 1 (true mean exceeding 4), the values of both the estimate and the true mean essentially converge.\
+Overall, the estimates are quite close to the true mean, yet there are discrepancies at specific points due to the selection of samples that should have been rejected.\
